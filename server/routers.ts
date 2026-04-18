@@ -1,10 +1,11 @@
-import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
+import { COOKIE_NAME } from "../shared/const";
 import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, router } from "./_core/trpc";
+import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
+import { z } from "zod";
+import { getDb } from "./db";
 
 export const appRouter = router({
-    // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
   system: systemRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
@@ -17,12 +18,98 @@ export const appRouter = router({
     }),
   }),
 
-  // TODO: add feature routers here, e.g.
-  // todo: router({
-  //   list: protectedProcedure.query(({ ctx }) =>
-  //     db.getUserTodos(ctx.user.id)
-  //   ),
-  // }),
+  // Lottery 라우터
+  lottery: router({
+    // 번호 선택 및 응모
+    submit: protectedProcedure
+      .input(
+        z.object({
+          numbers: z.array(z.number().min(1).max(45)).length(6),
+          walletAddress: z.string().optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        try {
+          const db = await getDb();
+          if (!db) {
+            throw new Error('Database not available');
+          }
+
+          console.log(`✅ 응모 접수: 사용자 ${ctx.user.id}, 번호 ${input.numbers}`);
+
+          // 응모 정보 저장 (나중에 DB 저장 추가)
+          return {
+            success: true,
+            message: '응모가 완료되었습니다.',
+            numbers: input.numbers.sort((a, b) => a - b),
+            timestamp: new Date(),
+          };
+        } catch (error) {
+          console.error('Lottery submit error:', error);
+          throw new Error('응모 중 오류가 발생했습니다.');
+        }
+      }),
+
+    // 사용자의 응모 목록 조회
+    list: protectedProcedure
+      .input(
+        z.object({
+          limit: z.number().default(10),
+          offset: z.number().default(0),
+        })
+      )
+      .query(async ({ ctx, input }) => {
+        try {
+          const db = await getDb();
+          if (!db) {
+            throw new Error('Database not available');
+          }
+
+          console.log(`📋 응모 목록 조회: 사용자 ${ctx.user.id}`);
+
+          // 임시 응모 목록 반환 (나중에 DB 조회로 변경)
+          return [
+            {
+              id: 1,
+              numbers: [1, 5, 10, 15, 20, 25],
+              status: 'pending',
+              walletAddress: null,
+              createdAt: new Date(),
+            },
+          ];
+        } catch (error) {
+          console.error('Lottery list error:', error);
+          throw new Error('응모 목록 조회 중 오류가 발생했습니다.');
+        }
+      }),
+
+    // 응모 상세 조회
+    get: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ ctx, input }) => {
+        try {
+          const db = await getDb();
+          if (!db) {
+            throw new Error('Database not available');
+          }
+
+          console.log(`🔍 응모 상세 조회: ID ${input.id}`);
+
+          // 임시 응모 정보 반환 (나중에 DB 조회로 변경)
+          return {
+            id: input.id,
+            numbers: [1, 5, 10, 15, 20, 25],
+            status: 'pending',
+            walletAddress: null,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          };
+        } catch (error) {
+          console.error('Lottery get error:', error);
+          throw new Error('응모 상세 조회 중 오류가 발생했습니다.');
+        }
+      }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;

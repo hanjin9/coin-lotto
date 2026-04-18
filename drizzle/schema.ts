@@ -25,4 +25,23 @@ export const users = mysqlTable("users", {
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 
+/**
+ * Web3 입금 거래 기록 테이블
+ */
+export const transactions = mysqlTable("transactions", {
+  id: int("id").autoincrement().primaryKey(),
+  hash: varchar("hash", { length: 66 }).notNull().unique(),
+  from: varchar("from", { length: 42 }).notNull(),
+  to: varchar("to", { length: 42 }).notNull(),
+  value: varchar("value", { length: 78 }).notNull(),
+  blockNumber: int("blockNumber"),
+  confirmations: int("confirmations").default(0),
+  status: mysqlEnum("status", ["pending", "confirmed", "failed"]).default("pending"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Transaction = typeof transactions.$inferSelect;
+export type InsertTransaction = typeof transactions.$inferInsert;
+
 // TODO: Add your tables here
