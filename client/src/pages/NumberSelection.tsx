@@ -9,6 +9,8 @@ import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { trpc } from '@/lib/trpc';
 import { useAuth } from '@/_core/hooks/useAuth';
+import { DeadlineTimer } from '@/components/DeadlineTimer';
+import { LockStatus } from '@/components/LockStatus';
 
 interface SelectedNumbers {
   [key: number]: boolean;
@@ -19,6 +21,10 @@ export default function NumberSelection() {
   const [selectedNumbers, setSelectedNumbers] = useState<SelectedNumbers>({});
   const [showConfirm, setShowConfirm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLocked, setIsLocked] = useState(false);
+  
+  // 마감 시간 설정 (예: 현재 시간 + 24시간)
+  const deadlineTime = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
   // tRPC 뮤테이션
   const submitLottery = trpc.lottery.submit.useMutation();
@@ -121,8 +127,23 @@ export default function NumberSelection() {
   }, [user, selectedNumbersArray, submitLottery, clearAll]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 p-4">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 p-4">      <div className="max-w-4xl mx-auto">
+        {/* 마감 타이머 */}
+        <div className="mb-6">
+          <DeadlineTimer
+            deadlineTime={deadlineTime}
+            onDeadlineReached={() => setIsLocked(true)}
+            isLocked={isLocked}
+          />
+        </div>
+
+        {/* 잠금 상태 */}
+        <LockStatus
+          isLocked={isLocked}
+          lockedReason="응모 마감 시간이 지났습니다."
+          canUnlock={false}
+        />
+
         {/* 헤더 */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-white mb-2">🎰 번호 선택</h1>
