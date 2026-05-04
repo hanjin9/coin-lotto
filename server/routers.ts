@@ -6,6 +6,10 @@ import { z } from "zod";
 import { getDb } from "./db";
 import { paymentRouter } from "./routers/payment";
 import { statisticsRouter } from "./routers/statistics";
+import { sendVerificationCode, verifyCode, resendVerificationCode } from "./sms-auth";
+import { handleGmailCallback, validateEmail } from "./email-auth";
+import { handleNaverCallback } from "./naver-auth";
+import { signupWithPhone, signupWithEmail } from "./simple-signup";
 
 export const appRouter = router({
   system: systemRouter,
@@ -18,6 +22,128 @@ export const appRouter = router({
         success: true,
       } as const;
     }),
+    
+    // SMS 인증 - 코드 발송
+    sendPhoneVerification: publicProcedure
+      .input(
+        z.object({
+          countryCode: z.string().default("82"), // 한국 기본값
+          phoneNumber: z.string(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        return await sendVerificationCode(input.countryCode, input.phoneNumber);
+      }),
+    
+    // SMS 인증 - 코드 검증
+    verifyPhoneCode: publicProcedure
+      .input(
+        z.object({
+          countryCode: z.string().default("82"),
+          phoneNumber: z.string(),
+          code: z.string(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        return await verifyCode(input.countryCode, input.phoneNumber, input.code);
+      }),
+    
+    // SMS 인증 - 코드 재발송
+    resendPhoneVerification: publicProcedure
+      .input(
+        z.object({
+          countryCode: z.string().default("82"),
+          phoneNumber: z.string(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        return await resendVerificationCode(input.countryCode, input.phoneNumber);
+      }),
+    
+    // Gmail 로그인
+    loginWithGmail: publicProcedure
+      .input(
+        z.object({
+          email: z.string().email(),
+          googleId: z.string(),
+          name: z.string().optional(),
+          picture: z.string().optional(),
+        })
+      )
+      .mutation(async ({ input, ctx }) => {
+        const result = await handleGmailCallback(
+          input.email,
+          input.googleId,
+          input.name,
+          input.picture
+        );
+        
+        if (result.success && result.sessionToken) {
+          // 세션 쿠키 설정
+          const cookieOptions = getSessionCookieOptions(ctx.req);
+          ctx.res.cookie(COOKIE_NAME, result.sessionToken, cookieOptions);
+        }
+        
+        return result;
+      }),
+    
+    // 이메일 검증
+    validateEmail: publicProcedure
+      .input(z.object({ email: z.string().email() }))
+      .query(async ({ input }) => {
+        return await validateEmail(input.email);
+      }),
+    
+    // Naver 로그인
+    loginWithNaver: publicProcedure
+      .input(
+        z.object({
+          email: z.string().email(),
+          naverId: z.string(),
+          name: z.string().optional(),
+          picture: z.string().optional(),
+        })
+      )
+      .mutation(async ({ input, ctx }) => {
+        const result = await handleNaverCallback(
+          input.email,
+          input.naverId,
+          input.name,
+          input.picture
+        );
+        
+        if (result.success && result.sessionToken) {
+          const cookieOptions = getSessionCookieOptions(ctx.req);
+          ctx.res.cookie(COOKIE_NAME, result.sessionToken, cookieOptions);
+        }
+        
+        return result;
+      }),
+    
+    // 간편 회원가입 - 휴대폰
+    signupWithPhone: publicProcedure
+      .input(
+        z.object({
+          name: z.string(),
+          countryCode: z.string().default("82"),
+          phoneNumber: z.string(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        return await signupWithPhone(input.name, input.countryCode, input.phoneNumber);
+      }),
+    
+    // 간편 회원가입 - 이메일
+    signupWithEmail: publicProcedure
+      .input(
+        z.object({
+          name: z.string(),
+          email: z.string().email(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        return await signupWithEmail(input.name, input.email);
+      }),
   }),
 
   // Payment 라우터 (월드코인 결제)
