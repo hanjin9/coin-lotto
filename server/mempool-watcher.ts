@@ -183,13 +183,15 @@ async function saveTransaction(tx: DepositTransaction) {
       return;
     }
     await db.insert(transactions).values({
-      hash: tx.hash,
-      from: tx.from,
-      to: tx.to,
-      value: tx.value.toString(),
+      userId: 1,
+      amount: tx.value.toString(),
+      currency: 'worldcoin',
+      txHash: tx.hash,
       blockNumber: tx.blockNumber,
       confirmations: tx.confirmations,
       status: tx.status,
+      retryCount: 0,
+      maxRetries: 3,
       createdAt: tx.timestamp,
       updatedAt: new Date(),
     });

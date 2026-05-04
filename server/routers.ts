@@ -4,6 +4,8 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import { getDb } from "./db";
+import { paymentRouter } from "./routers/payment";
+import { statisticsRouter } from "./routers/statistics";
 
 export const appRouter = router({
   system: systemRouter,
@@ -17,6 +19,12 @@ export const appRouter = router({
       } as const;
     }),
   }),
+
+  // Payment 라우터 (월드코인 결제)
+  payment: paymentRouter,
+
+  // Statistics 라우터 (통계 분석)
+  statistics: statisticsRouter,
 
   // Lottery 라우터
   lottery: router({
