@@ -15,7 +15,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useToast } from '@/components/ui/use-toast';
 import { trpc } from '@/lib/trpc';
 
 interface SignupFormProps {
@@ -29,7 +28,6 @@ export default function SignupForm({ onSignupSuccess }: SignupFormProps) {
   const [countryCode, setCountryCode] = useState('82');
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
 
   const signupWithPhoneMutation = trpc.auth.signupWithPhone.useMutation();
   const signupWithEmailMutation = trpc.auth.signupWithEmail.useMutation();
@@ -38,20 +36,12 @@ export default function SignupForm({ onSignupSuccess }: SignupFormProps) {
     e.preventDefault();
 
     if (!name.trim()) {
-      toast({
-        title: '오류',
-        description: '이름을 입력해주세요.',
-        variant: 'destructive',
-      });
+      alert('이름을 입력해주세요.');
       return;
     }
 
     if (!phoneNumber.trim()) {
-      toast({
-        title: '오류',
-        description: '휴대폰 번호를 입력해주세요.',
-        variant: 'destructive',
-      });
+      alert('휴대폰 번호를 입력해주세요.');
       return;
     }
 
@@ -64,26 +54,14 @@ export default function SignupForm({ onSignupSuccess }: SignupFormProps) {
       });
 
       if (result.success) {
-        toast({
-          title: '성공',
-          description: '회원가입이 완료되었습니다. 자동 생성된 비밀번호로 로그인하세요.',
-        });
-        setName('');
-        setPhoneNumber('');
+        alert('회원가입이 완료되었습니다.');
         onSignupSuccess?.();
       } else {
-        toast({
-          title: '오류',
-          description: result.message,
-          variant: 'destructive',
-        });
+        alert(result.message || '회원가입 중 오류가 발생했습니다.');
       }
     } catch (error) {
-      toast({
-        title: '오류',
-        description: '회원가입 중 오류가 발생했습니다.',
-        variant: 'destructive',
-      });
+      console.error('Phone signup error:', error);
+      alert('회원가입 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
     }
@@ -93,20 +71,12 @@ export default function SignupForm({ onSignupSuccess }: SignupFormProps) {
     e.preventDefault();
 
     if (!name.trim()) {
-      toast({
-        title: '오류',
-        description: '이름을 입력해주세요.',
-        variant: 'destructive',
-      });
+      alert('이름을 입력해주세요.');
       return;
     }
 
     if (!email.trim()) {
-      toast({
-        title: '오류',
-        description: '이메일을 입력해주세요.',
-        variant: 'destructive',
-      });
+      alert('이메일을 입력해주세요.');
       return;
     }
 
@@ -118,136 +88,133 @@ export default function SignupForm({ onSignupSuccess }: SignupFormProps) {
       });
 
       if (result.success) {
-        toast({
-          title: '성공',
-          description: '회원가입이 완료되었습니다. 자동 생성된 비밀번호로 로그인하세요.',
-        });
-        setName('');
-        setEmail('');
+        alert('회원가입이 완료되었습니다.');
         onSignupSuccess?.();
       } else {
-        toast({
-          title: '오류',
-          description: result.message,
-          variant: 'destructive',
-        });
+        alert(result.message || '회원가입 중 오류가 발생했습니다.');
       }
     } catch (error) {
-      toast({
-        title: '오류',
-        description: '회원가입 중 오류가 발생했습니다.',
-        variant: 'destructive',
-      });
+      console.error('Email signup error:', error);
+      alert('회원가입 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Tabs value={signupType} onValueChange={(v) => setSignupType(v as 'phone' | 'email')} className="w-full">
-      <TabsList className="grid w-full grid-cols-2 mb-4">
-        <TabsTrigger value="phone">📱 휴대폰</TabsTrigger>
-        <TabsTrigger value="email">📧 이메일</TabsTrigger>
-      </TabsList>
+    <div className="w-full max-w-md mx-auto p-6 bg-slate-950 rounded-lg border border-gray-700">
+      <h2 className="text-2xl font-bold text-white mb-6">회원가입</h2>
 
-      {/* 휴대폰 회원가입 */}
-      <TabsContent value="phone">
-        <form onSubmit={handlePhoneSignup} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="signup-name-phone">이름</Label>
-            <Input
-              id="signup-name-phone"
-              type="text"
-              placeholder="홍길동"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="bg-slate-900 border-gray-600 text-white placeholder:text-gray-500"
-            />
-          </div>
+      <Tabs value={signupType} onValueChange={(v) => setSignupType(v as 'phone' | 'email')}>
+        <TabsList className="grid w-full grid-cols-2 mb-6">
+          <TabsTrigger value="phone">휴대폰</TabsTrigger>
+          <TabsTrigger value="email">이메일</TabsTrigger>
+        </TabsList>
 
-          <div className="space-y-2">
-            <Label htmlFor="country-code-phone">국가 코드</Label>
-            <select
-              id="country-code-phone"
-              value={countryCode}
-              onChange={(e) => setCountryCode(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-600 rounded-md bg-slate-950 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+        {/* 휴대폰 회원가입 */}
+        <TabsContent value="phone">
+          <form onSubmit={handlePhoneSignup} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">이름</Label>
+              <Input
+                id="name"
+                type="text"
+                placeholder="홍길동"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                disabled={loading}
+                className="bg-slate-900 border-gray-600 text-white"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="country">국가번호</Label>
+              <select
+                id="country"
+                value={countryCode}
+                onChange={(e) => setCountryCode(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-600 rounded-md bg-slate-950 text-white"
+              >
+                <option value="82">🇰🇷 +82 (Korea)</option>
+                <option value="1">🇺🇸 +1 (USA)</option>
+                <option value="44">🇬🇧 +44 (UK)</option>
+                <option value="81">🇯🇵 +81 (Japan)</option>
+                <option value="86">🇨🇳 +86 (China)</option>
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="phone">휴대폰 번호</Label>
+              <Input
+                id="phone"
+                type="tel"
+                placeholder="010-1234-5678"
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+                disabled={loading}
+                className="bg-slate-900 border-gray-600 text-white"
+              />
+            </div>
+
+            <div className="bg-slate-900 border border-purple-500/30 rounded-lg p-3 text-xs text-gray-400 space-y-1">
+              <p>✓ 비밀번호: 휴대폰 뒷자리 4자리</p>
+              <p>✓ 로그인 후 프로필에서 변경 가능</p>
+            </div>
+
+            <Button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-purple-600 hover:bg-purple-700 text-white"
             >
-              <option value="82">🇰🇷 대한민국 (+82)</option>
-              <option value="1">🇺🇸 미국 (+1)</option>
-              <option value="44">🇬🇧 영국 (+44)</option>
-              <option value="81">🇯🇵 일본 (+81)</option>
-            </select>
-          </div>
+              {loading ? '가입 중...' : '가입하기'}
+            </Button>
+          </form>
+        </TabsContent>
 
-          <div className="space-y-2">
-            <Label htmlFor="phone-signup">휴대폰 번호</Label>
-            <Input
-              id="phone-signup"
-              type="tel"
-              placeholder="010-1234-5678"
-              value={phoneNumber}
-              onChange={(e) => setPhoneNumber(e.target.value)}
-              className="bg-slate-900 border-gray-600 text-white placeholder:text-gray-500"
-            />
-          </div>
+        {/* 이메일 회원가입 */}
+        <TabsContent value="email">
+          <form onSubmit={handleEmailSignup} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email-name">이름</Label>
+              <Input
+                id="email-name"
+                type="text"
+                placeholder="홍길동"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                disabled={loading}
+                className="bg-slate-900 border-gray-600 text-white"
+              />
+            </div>
 
-          <div className="bg-slate-900 border border-purple-500/30 rounded-lg p-3 text-xs text-gray-400">
-            <p>✓ 비밀번호: 휴대폰 뒷자리 4자리</p>
-            <p>✓ 로그인 후 프로필에서 변경 가능</p>
-          </div>
+            <div className="space-y-2">
+              <Label htmlFor="email-input">이메일</Label>
+              <Input
+                id="email-input"
+                type="email"
+                placeholder="example@gmail.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={loading}
+                className="bg-slate-900 border-gray-600 text-white"
+              />
+            </div>
 
-          <Button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
-          >
-            {loading ? '가입 중...' : '회원가입'}
-          </Button>
-        </form>
-      </TabsContent>
+            <div className="bg-slate-900 border border-purple-500/30 rounded-lg p-3 text-xs text-gray-400 space-y-1">
+              <p>✓ 비밀번호: 이메일 앞부분 4자리</p>
+              <p>✓ 로그인 후 프로필에서 변경 가능</p>
+            </div>
 
-      {/* 이메일 회원가입 */}
-      <TabsContent value="email">
-        <form onSubmit={handleEmailSignup} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="signup-name-email">이름</Label>
-            <Input
-              id="signup-name-email"
-              type="text"
-              placeholder="홍길동"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="bg-slate-900 border-gray-600 text-white placeholder:text-gray-500"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="email-signup">이메일</Label>
-            <Input
-              id="email-signup"
-              type="email"
-              placeholder="your@email.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="bg-slate-900 border-gray-600 text-white placeholder:text-gray-500"
-            />
-          </div>
-
-          <div className="bg-slate-900 border border-purple-500/30 rounded-lg p-3 text-xs text-gray-400">
-            <p>✓ 비밀번호: 이메일 앞부분 4자리</p>
-            <p>✓ 로그인 후 프로필에서 변경 가능</p>
-          </div>
-
-          <Button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
-          >
-            {loading ? '가입 중...' : '회원가입'}
-          </Button>
-        </form>
-      </TabsContent>
-    </Tabs>
+            <Button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+            >
+              {loading ? '가입 중...' : '가입하기'}
+            </Button>
+          </form>
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 }
